@@ -1,0 +1,21 @@
+{
+  "expo": {
+    "name": "AutoInsight",
+    "slug": "autoinsight",
+    "version": "1.0.0",
+    "scheme": "autoinsight",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#003087"
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router"
+    ]
+  }
+}
