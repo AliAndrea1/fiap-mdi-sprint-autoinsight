@@ -1,7 +1,7 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_URL = 'http://SEU_IP:8080/api';
+const API_URL = 'https://sprint-soa-ford-production.up.railway.app/api';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -75,12 +75,20 @@ export const vehicleService = {
     return response.data.data;
   },
 
-  search: async (brand: string, model: string, version: string): Promise<VehicleResponse> => {
-    const response = await api.get<ApiResponse<VehicleResponse>>('/vehicles/search', {
-      params: { brand, model, version },
-    });
-    return response.data.data;
-  },
+  search: async (
+  brand: string,
+  model: string,
+  version: string,
+  attributes: string[] = []
+): Promise<VehicleResponse> => {
+  const response = await api.get<ApiResponse<VehicleResponse>>('/vehicles/search', {
+    params: { brand, model, version, attributes },
+    paramsSerializer: {
+      indexes: null,
+    },
+  });
+  return response.data.data;
+},
 
   getByBrand: async (brand: string): Promise<VehicleResponse[]> => {
     const response = await api.get<ApiResponse<VehicleResponse[]>>(`/vehicles/brand/${brand}`);

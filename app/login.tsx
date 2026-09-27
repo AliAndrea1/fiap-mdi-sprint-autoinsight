@@ -7,15 +7,15 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
-  SafeAreaView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { Colors, FontSize, Spacing, Radius } from '../constants/theme';
 import Logo from '../components/Logo';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-const API_URL = 'http://SEU_IP:8080/api';
+const API_URL = 'https://sprint-soa-ford-production.up.railway.app/api';
 
 export default function LoginScreen() {
   const router = useRouter();

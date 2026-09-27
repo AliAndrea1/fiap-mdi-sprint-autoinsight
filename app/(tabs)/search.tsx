@@ -16,128 +16,204 @@ import SpecRow from '../../components/SpecRow';
 
 export default function SearchScreen() {
   const router = useRouter();
-  const [brand, setBrand] = useState('');
-  const [model, setModel] = useState('');
-  const [version, setVersion] = useState('');
+
+  const [options, setOptions] = useState<VehicleResponse[]>([]);
+  const [loadingOptions, setLoadingOptions] = useState(true);
+  const [optionsError, setOptionsError] = useState(false);
+  const [showOptions, setShowOptions] = useState(false);
+
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [attributes, setAttributes] = useState('');
   const [loading, setLoading] = useState(false);
   const [vehicle, setVehicle] = useState<VehicleResponse | null>(null);
   const [error, setError] = useState('');
 
+  const loadOptions = useCallback(async () => {
+    setLoadingOptions(true);
+
+    try {
+      const data = await vehicleService.getAll();
+      setOptions(data);
+      setOptionsError(false);
+    } catch {
+      setOptionsError(true);
+    } finally {
+      setLoadingOptions(false);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadOptions();
+    }, [loadOptions])
+  );
+
+  const selectedVehicle = options.find(item => item.id === selectedId);
+
+  const vehicleLabel = (item: VehicleResponse) =>
+    `${item.brand} ${item.model} — ${item.version}`;
+
   const handleSearch = async () => {
-    if (!brand || !model || !version) {
-      Alert.alert('Atenção', 'Preencha todos os campos para buscar!');
+    if (!selectedVehicle) {
+      Alert.alert('Atenção', 'Selecione um veículo para buscar.');
       return;
     }
+
+    const requestedAttributes = attributes
+      .split(',')
+      .map(item => item.trim())
+      .filter(Boolean);
+
     setLoading(true);
     setError('');
     setVehicle(null);
+
     try {
-      const result = await vehicleService.search(brand, model, version);
+      const result = await vehicleService.search(
+        selectedVehicle.brand,
+        selectedVehicle.model,
+        selectedVehicle.version,
+        requestedAttributes
+      );
+
       setVehicle(result);
-    } catch (err: any) {
-      setError('Veículo não encontrado. Verifique os dados e tente novamente.');
+    } catch {
+      setError('Não foi possível buscar as especificações. Tente novamente.');
     } finally {
       setLoading(false);
     }
   };
 
   const handleClear = () => {
-    setBrand('');
-    setModel('');
-    setVersion('');
+    setSelectedId(null);
+    setAttributes('');
+    setShowOptions(false);
     setVehicle(null);
     setError('');
   };
-
-  useFocusEffect(
-  useCallback(() => {
-    return () => {
-      setBrand('');
-      setModel('');
-      setVersion('');
-      setVehicle(null);
-      setError('');
-    };
-  }, [])
-);
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.headerTop}>
-        <View style={styles.headerLeft}>
+          <View style={styles.headerLeft}>
             <Text style={styles.headerTitle}>Buscar Veículo</Text>
-            <Text style={styles.headerSubtitle}>Informe os dados para consultar as especificações</Text>
-        </View>
-        <View style={styles.headerButtons}>
+            <Text style={styles.headerSubtitle}>
+              Escolha um veículo e os atributos que deseja consultar
+            </Text>
+          </View>
+
+          <View style={styles.headerButtons}>
             <TouchableOpacity
-            style={styles.historyButton}
-            onPress={() => router.push('/(tabs)')}
+              style={styles.navButton}
+              onPress={() => router.push('/(tabs)')}
             >
-            <Text style={styles.historyText}>Início</Text>
+              <Text style={styles.navButtonText}>Início</Text>
             </TouchableOpacity>
+
             <TouchableOpacity
-            style={styles.historyButton}
-            onPress={() => router.push('/(tabs)/history')}
+              style={styles.navButton}
+              onPress={() => router.push('/(tabs)/history')}
             >
-            <Text style={styles.historyText}>Histórico</Text>
+              <Text style={styles.navButtonText}>Histórico</Text>
             </TouchableOpacity>
-        </View>
+          </View>
         </View>
       </View>
 
-      <ScrollView style={styles.content} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        style={styles.content}
+        contentContainerStyle={{ paddingBottom: 48 }}
+        keyboardShouldPersistTaps="handled"
+      >
         <View style={styles.form}>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Marca</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Ex: Ford, Chevrolet, Toyota..."
-              placeholderTextColor={Colors.text.muted}
-              value={brand}
-              onChangeText={setBrand}
-              autoCapitalize="words"
-            />
-          </View>
+          <Text style={styles.label}>Veículo</Text>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Modelo</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Ex: Ranger, S10, Hilux..."
-              placeholderTextColor={Colors.text.muted}
-              value={model}
-              onChangeText={setModel}
-              autoCapitalize="words"
-            />
-          </View>
+          <TouchableOpacity
+            style={styles.selector}
+            onPress={() => setShowOptions(value => !value)}
+            disabled={loadingOptions || optionsError}
+          >
+            <Text style={styles.selectorText}>
+              {selectedVehicle
+                ? vehicleLabel(selectedVehicle)
+                : loadingOptions
+                  ? 'Carregando veículos...'
+                  : 'Selecionar veículo'}
+            </Text>
+            <Text style={styles.selectorArrow}>
+              {showOptions ? '▲' : '▼'}
+            </Text>
+          </TouchableOpacity>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Versão</Text>
+          {showOptions && (
+            <View style={styles.optionsList}>
+              {options.map(item => (
+                <TouchableOpacity
+                  key={item.id}
+                  style={[
+                    styles.option,
+                    selectedId === item.id && styles.selectedOption,
+                  ]}
+                  onPress={() => {
+                    setSelectedId(item.id);
+                    setVehicle(null);
+                    setError('');
+                    setShowOptions(false);
+                  }}
+                >
+                  <Text style={styles.optionText}>
+                    {vehicleLabel(item)}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+
+          {optionsError && (
+            <Text style={styles.errorText}>
+              Não foi possível carregar os veículos. Confira a API.
+            </Text>
+          )}
+
+          <View style={styles.attributesGroup}>
+            <Text style={styles.label}>
+              Atributos que deseja pesquisar
+            </Text>
             <TextInput
-              style={styles.input}
-              placeholder="Ex: XLT 3.0L V6 AT..."
+              style={styles.attributesInput}
+              placeholder="Ex: Potência, Torque, Cor do volante"
               placeholderTextColor={Colors.text.muted}
-              value={version}
-              onChangeText={setVersion}
-              autoCapitalize="words"
+              value={attributes}
+              onChangeText={setAttributes}
+              autoCapitalize="sentences"
+              multiline
             />
+            <Text style={styles.hint}>
+              Separe por vírgula. Se deixar vazio, serão exibidas todas as
+              especificações cadastradas.
+            </Text>
           </View>
 
           <TouchableOpacity
             style={[styles.searchButton, loading && styles.disabled]}
             onPress={handleSearch}
-            disabled={loading}
+            disabled={loading || loadingOptions || optionsError}
           >
             {loading ? (
-              <ActivityIndicator color={Colors.text.inverse}/>
+              <ActivityIndicator color={Colors.text.inverse} />
             ) : (
-              <Text style={styles.searchButtonText}>🔍 Buscar Especificações</Text>
+              <Text style={styles.searchButtonText}>
+                🔍 Buscar Especificações
+              </Text>
             )}
           </TouchableOpacity>
 
-          {vehicle && (
-            <TouchableOpacity style={styles.clearButton} onPress={handleClear}>
+          {(selectedId !== null || attributes !== '') && (
+            <TouchableOpacity
+              style={styles.clearButton}
+              onPress={handleClear}
+            >
               <Text style={styles.clearButtonText}>Limpar busca</Text>
             </TouchableOpacity>
           )}
@@ -145,7 +221,6 @@ export default function SearchScreen() {
 
         {error !== '' && (
           <View style={styles.errorContainer}>
-            <Text style={styles.errorIcon}>⚠️</Text>
             <Text style={styles.errorText}>{error}</Text>
           </View>
         )}
@@ -158,22 +233,28 @@ export default function SearchScreen() {
               </View>
               <Text style={styles.year}>{vehicle.year}</Text>
             </View>
+
             <Text style={styles.modelText}>{vehicle.model}</Text>
             <Text style={styles.versionText}>{vehicle.version}</Text>
 
             <View style={styles.specsContainer}>
-              <Text style={styles.specsTitle}>Especificações Técnicas</Text>
-              {vehicle.specifications && vehicle.specifications.length > 0 ? (
+              <Text style={styles.specsTitle}>
+                Especificações Técnicas
+              </Text>
+
+              {vehicle.specifications?.length > 0 ? (
                 vehicle.specifications.map((spec, index) => (
                   <SpecRow
-                    key={index}
+                    key={`${spec.attributeName}-${index}`}
                     label={spec.attributeName}
                     value={spec.attributeValue}
                     unit={spec.unit}
                   />
                 ))
               ) : (
-                <Text style={styles.noSpecs}>Nenhuma especificação cadastrada</Text>
+                <Text style={styles.noSpecs}>
+                  Nenhuma especificação cadastrada
+                </Text>
               )}
             </View>
           </View>
@@ -213,18 +294,22 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.6)',
     marginTop: 4,
   },
-  historyButton: {
-  backgroundColor: 'rgba(255,255,255,0.15)',
-  paddingHorizontal: Spacing.sm,
-  paddingVertical: Spacing.xs,
-  borderRadius: Radius.full,
-  marginTop: 40,
-},
-historyText: {
-  fontSize: FontSize.xs,
-  color: Colors.text.inverse,
-  fontWeight: '600',
-},
+  headerButtons: {
+    flexDirection: 'row',
+    gap: Spacing.xs,
+    marginTop: 40,
+  },
+  navButton: {
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    borderRadius: Radius.full,
+  },
+  navButtonText: {
+    fontSize: FontSize.xs,
+    color: Colors.text.inverse,
+    fontWeight: '600',
+  },
   content: {
     flex: 1,
     padding: Spacing.md,
@@ -238,38 +323,88 @@ historyText: {
     borderColor: Colors.border,
     elevation: 1,
   },
-  inputGroup: {
-    marginBottom: Spacing.md,
-  },
   label: {
     fontSize: FontSize.sm,
     fontWeight: '600',
     color: Colors.text.secondary,
     marginBottom: Spacing.xs,
   },
-  input: {
+  selector: {
+    minHeight: 48,
     borderWidth: 1,
     borderColor: Colors.border,
     borderRadius: Radius.sm,
-    padding: Spacing.sm,
-    fontSize: FontSize.md,
-    color: Colors.text.primary,
     backgroundColor: Colors.background,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  selectorText: {
+    flex: 1,
+    fontSize: 15,
+    color: Colors.text.primary,
+  },
+  selectorArrow: {
+    fontSize: 12,
+    color: Colors.text.secondary,
+  },
+  optionsList: {
+    marginTop: 6,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: Radius.sm,
+    overflow: 'hidden',
+  },
+  option: {
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+    backgroundColor: Colors.surface,
+  },
+  selectedOption: {
+    backgroundColor: '#EFF6FF',
+  },
+  optionText: {
+    fontSize: 14,
+    color: Colors.text.primary,
+  },
+  attributesGroup: {
+    marginTop: Spacing.md,
+  },
+  attributesInput: {
+    minHeight: 64,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.background,
+    color: Colors.text.primary,
+    fontSize: FontSize.md,
+    padding: Spacing.sm,
+    textAlignVertical: 'top',
+  },
+  hint: {
+    fontSize: FontSize.xs,
+    color: Colors.text.muted,
+    marginTop: Spacing.xs,
   },
   searchButton: {
     backgroundColor: Colors.primary,
     padding: Spacing.md,
     borderRadius: Radius.sm,
     alignItems: 'center',
-    marginTop: Spacing.xs,
-  },
-  disabled: {
-    opacity: 0.6,
+    marginTop: Spacing.md,
   },
   searchButtonText: {
     color: Colors.text.inverse,
     fontSize: FontSize.md,
     fontWeight: '700',
+  },
+  disabled: {
+    opacity: 0.6,
   },
   clearButton: {
     padding: Spacing.sm,
@@ -284,19 +419,11 @@ historyText: {
     padding: Spacing.md,
     backgroundColor: '#FEF2F2',
     borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Colors.error,
-    alignItems: 'center',
     marginBottom: Spacing.md,
   },
-  errorIcon: {
-    fontSize: 24,
-    marginBottom: Spacing.xs,
-  },
   errorText: {
-    fontSize: FontSize.sm,
     color: Colors.error,
-    textAlign: 'center',
+    fontSize: FontSize.sm,
   },
   resultContainer: {
     backgroundColor: Colors.surface,
@@ -356,9 +483,4 @@ historyText: {
     textAlign: 'center',
     paddingVertical: Spacing.md,
   },
-  headerButtons: {
-  flexDirection: 'row',
-  gap: Spacing.xs,
-  marginTop: 5,
-},
 });

@@ -6,16 +6,31 @@
     "scheme": "autoinsight",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#003087"
+    "android": {
+      "package": "com.autoinsight.ford",
+      "versionCode": 1
     },
     "web": {
       "bundler": "metro"
     },
     "plugins": [
-      "expo-router"
-    ]
+      "expo-router",
+      "expo-font",
+      "expo-status-bar",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "eade6050-a18c-4ada-9077-9a1401d70e79"
+      }
+    }
   }
 }
