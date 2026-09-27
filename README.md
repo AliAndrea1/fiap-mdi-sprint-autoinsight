@@ -33,33 +33,11 @@ Abra o link no celular Android, baixe o APK e confirme a instalação quando o s
 
 O APK foi instalado e testado em um dispositivo físico com dados móveis, fora da rede local usada durante o desenvolvimento. O build foi gerado com o perfil `preview`, configurado em `eas.json` para produzir o formato `.apk`.
 
-## Demonstração visual
+## Demonstração visual - Vídeo do APK instalado
 
-### Telas
+**Vídeo de demonstração:** 
 
-**Login**
-
-<img width="360" alt="Tela de login do AutoInsight" src="https://github.com/user-attachments/assets/4c71d158-6a5f-47bc-899e-1e1a9f16cb68" />
-
-**Início — veículos cadastrados**
-
-<img width="360" alt="Tela inicial com veículos cadastrados" src="https://github.com/user-attachments/assets/154e5a7c-7dbb-4b1f-bbd6-03b89d68fd09" />
-
-**Busca e especificações**
-
-<img width="360" alt="Tela de busca de veículos" src="https://github.com/user-attachments/assets/e5f61fc9-32c8-459c-b57d-6f603c36fac2" />
-
-**Comparação**
-
-<img width="360" alt="Tela de comparação de veículos" src="https://github.com/user-attachments/assets/7331cf7c-43b7-4e72-a5a5-57976329719e" />
-
-**Histórico**
-
-<img width="360" alt="Tela de histórico de buscas" src="https://github.com/user-attachments/assets/05d424e9-a4ae-41d1-a18e-b5d1a8d4156b" />
-
-### Vídeo do APK instalado
-
-**Vídeo de demonstração:** adicione aqui o link após publicar a gravação. Mostre login, listagem, busca, comparação e histórico. A gravação pode usar a conta de demonstração `admin`; não é necessário mostrar a senha sendo digitada.
+https://github.com/user-attachments/assets/13861fbc-ba94-423c-b7f1-79e34cc0e9a3
 
 ## Executar o código-fonte
 
